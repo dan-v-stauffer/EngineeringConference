@@ -1,0 +1,270 @@
+                    <asp:UpdatePanel ID="up_SymposiumChoice" runat="server">
+                        <ContentTemplate>
+                            <asp:DataList ID="dl_PaperSymposiaList" OnItemDataBound="dl_PaperSymposiaList_ItemDataBound"
+                                RepeatDirection="Horizontal" runat="server">
+                                <HeaderTemplate>
+                                    <i>Select your top two choices from each scheduled symposium:</i>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <div style="border: 1px solid silver; width: 250px; margin-bottom: 10px; padding: 5px;
+                                        height: 180px">
+                                        <div style="width: 100%; float: left; margin-top: 5px; margin-bottom: 10px;">
+                                            <b>
+                                                <asp:Label ID="lbl_SymposiaGroupTitle" runat="server" />
+                                            </b>
+                                        </div>
+                                        <div style="width: 250px">
+                                            <table>
+                                                <tr>
+                                                    <td style="width: 200px;">
+                                                    </td>
+                                                    <td style="width: 50px;">
+                                                        <table>
+                                                            <tr>
+                                                                <td style="width: 25px; text-align: center;">
+                                                                    <div style="width: 25px">
+                                                                        1<sup>st</sup>
+                                                                    </div>
+                                                                </td>
+                                                                <td style="width: 25px; text-align: center;">
+                                                                    <div style="width: 25px">
+                                                                        2<sup>nd</sup>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <asp:DataList ID="dl_PaperSymposiaChoices" runat="server" OnItemDataBound="dl_PaperSymposiaChoices_ItemDataBound">
+                                            <ItemTemplate>
+                                                <div style="width: 250px; float: left">
+                                                    <table>
+                                                        <tr>
+                                                            <td style="width: 180px">
+                                                                <div class="itemWithDetail">
+                                                                    <asp:Label ID="lbl_SymposiumName" runat="server" />
+                                                                </div>
+                                                            </td>
+                                                            <td style="width: 25px; text-align: center;">
+                                                                <div style="width: 25px; text-align: center">
+                                                                    <asp:RadioButton ID="rbSymposium1st" OnCheckedChanged="rbSymposium_CheckedChanged"
+                                                                        AutoPostBack="true" runat="server" />
+                                                                </div>
+                                                            </td>
+                                                            <td style="width: 25px; text-align: center;">
+                                                                <div style="width: 25px; text-align: center">
+                                                                    <asp:RadioButton ID="rbSymposium2nd" OnCheckedChanged="rbSymposium_CheckedChanged"
+                                                                        AutoPostBack="true" runat="server" />
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </ItemTemplate>
+                                        </asp:DataList>
+                                    </div>
+                                </ItemTemplate>
+                            </asp:DataList>
+                        </ContentTemplate>
+                    </asp:UpdatePanel>
+
+
+
+====================ASSOCIATED CODE BEHIND==========================================
+
+
+
+
+    private void loadSymposia()
+    {
+        if (Session["symposiaMasterList"] == null)
+        {
+            //sp_GetSimultaneousEventsByEventType
+            GenericCmdParameter[] parameters = {new GenericCmdParameter("@conferenceID", Convert.ToInt32(Session["conferenceID"])),
+            new GenericCmdParameter("@eventType", "Paper Symposium")};
+            DataTable table = dataUtil.webAppTable("sp_GetSimultaneousEventsByEventType", parameters);
+
+            table.Columns.Add(new DataColumn("roman", typeof(String)));
+
+            DateTime temp = Convert.ToDateTime("1/1/1900");
+            int i = 1;
+            foreach (DataRow row in table.Rows)
+                row["roman"] = Common.ToRoman(i++);
+
+            Session["symposiaMasterList"] = table;
+            dl_PaperSymposiaList.DataSource = table;
+        }
+        else
+        {
+            dl_PaperSymposiaList.DataSource = (DataTable)Session["symposiaMasterList"];
+        }
+        dl_PaperSymposiaList.DataBind();
+    }
+
+
+    protected void dl_PaperSymposiaList_ItemDataBound(object sender, DataListItemEventArgs e)
+    {
+        if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+        {
+            DataRowView drv = (DataRowView)e.Item.DataItem;
+            DateTime startTime = Convert.ToDateTime(drv["eventStart"]);
+
+            Label lbl_SymposiaGroupTitle = (Label)e.Item.FindControl("lbl_SymposiaGroupTitle");
+            lbl_SymposiaGroupTitle.Text = drv["eventType"].ToString() + " " + drv["roman"].ToString();
+
+            DataList dl_PaperSymposiaChoices = (DataList)e.Item.FindControl("dl_PaperSymposiaChoices");
+            
+            GenericCmdParameter[] parameters = {new GenericCmdParameter("@conferenceID", Convert.ToInt32(Session["conferenceID"])),
+            new GenericCmdParameter("@startTime", startTime)};
+            
+            
+            dl_PaperSymposiaChoices.Attributes.Add("symposiumID", lbl_SymposiaGroupTitle.Text);
+
+            if (Session[lbl_SymposiaGroupTitle.Text] == null)
+                Session[lbl_SymposiaGroupTitle.Text] = new Dictionary<int, Dictionary<string, RadioButton>>();
+
+            dl_PaperSymposiaChoices.DataSource = dataUtil.webAppTable("sp_GetPaperSymposiaByStartTime", parameters);
+            dl_PaperSymposiaChoices.DataBind();
+
+        }
+    }
+
+
+    protected void dl_PaperSymposiaChoices_ItemDataBound(object sender, DataListItemEventArgs e)
+    {
+        if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+        {
+            DataRowView drv = (DataRowView)e.Item.DataItem;
+            Label lbl_SymposiumName = (Label)e.Item.FindControl("lbl_SymposiumName");
+            int symposiumID = Convert.ToInt32(drv["symposiumID"]);
+            lbl_SymposiumName.Text = drv["paperSymposiumTitle"].ToString();
+            lbl_SymposiumName.ToolTip = drv["paperSymposiumDescription"].ToString();
+            string attributeValue = ((DataList)sender).Attributes["symposiumID"];
+
+            Dictionary<int, Dictionary<string, RadioButton>> dictionary = (Dictionary<int, Dictionary<string, RadioButton>>)Session[attributeValue];
+            Dictionary<string, RadioButton> rowButtons = new Dictionary<string, RadioButton>();
+
+            RadioButton rbSymposium1st = (RadioButton)e.Item.FindControl("rbSymposium1st");
+            RadioButton rbSymposium2nd = (RadioButton)e.Item.FindControl("rbSymposium2nd");
+
+            rbSymposium1st.Attributes.Add("symposiumID", attributeValue);
+            rbSymposium2nd.Attributes.Add("symposiumID", attributeValue);
+
+            rbSymposium1st.Attributes.Add("value", "1");
+            rbSymposium2nd.Attributes.Add("value", "2");
+
+            rowButtons[rbSymposium1st.ClientID] = rbSymposium1st;
+            rowButtons[rbSymposium2nd.ClientID] = rbSymposium2nd;
+
+            if (!dictionary.ContainsKey(symposiumID))
+                dictionary[symposiumID] = rowButtons;
+            else
+            {
+                rbSymposium1st.Checked = dictionary[symposiumID][rbSymposium1st.ClientID].Checked;
+                rbSymposium2nd.Checked = dictionary[symposiumID][rbSymposium2nd.ClientID].Checked;
+            }
+        }
+    }
+
+    protected void cbo_SymposiumSelection_OnSelectedIndexChanged(object sender, EventArgs e)
+    {
+        DropDownList me = (DropDownList)sender;
+        string attrributeValue = me.Attributes["symposiumID"];
+        Dictionary<string, DropDownList> cboGroup = (Dictionary<string, DropDownList>)Session[attrributeValue];
+
+        if (me.SelectedValue != "0")
+        {
+            foreach (KeyValuePair<string, DropDownList> pair in cboGroup)
+            {
+
+                Control ctl = FindControlRecursiveByClientID(this, pair.Value.ClientID);
+
+                if (me.ClientID != pair.Key)
+                {
+                    if (pair.Value.Items.FindByValue("2").Selected && me.SelectedValue == "2")
+                    {
+                        pair.Value.Items.FindByValue("2").Selected = false;
+                        pair.Value.Items.FindByValue("1").Selected = false;
+                        pair.Value.Items.FindByValue("0").Selected = true;
+                        ScriptManager.RegisterStartupScript(this.Page, this.GetType(), pair.Value.ClientID + "_UpdateTo0",
+                              "var elem = document.getElementById('" + pair.Value.ClientID + "'); elem.selectedIndex =0; elem.onchange();", true);
+                    }
+                    else if (pair.Value.Items.FindByValue("1").Selected && me.SelectedValue == "1")
+                    {
+                        pair.Value.Items.FindByValue("2").Selected = true;
+                        pair.Value.Items.FindByValue("1").Selected = false;
+                        pair.Value.Items.FindByValue("0").Selected = false;
+
+                        ScriptManager.RegisterStartupScript(this.Page, this.GetType(), pair.Value.ClientID + "_UpdateTo1",
+                            "var elem = document.getElementById('" + pair.Value.ClientID + "'); elem.selectedIndex =2; elem.onchange();", true);
+                    }
+                }
+                else
+                {
+                    foreach (ListItem item in pair.Value.Items)
+                    {
+                        if (item.Value == me.SelectedValue)
+                            item.Selected = true;
+                        else
+                            item.Selected = false;
+                    }
+                }
+            }
+        }
+    }
+
+    protected void rbSymposium_CheckedChanged(object sender, EventArgs e)
+    {
+        RadioButton target = (RadioButton)sender;
+        String attributeValue = target.Attributes["symposiumID"];
+        if (target.Checked)
+        {
+            processRadioButtons((Dictionary<int, Dictionary<string, RadioButton>>)Session[attributeValue], target);
+            loadSymposia();
+        }
+    }
+
+
+//Helpers - these are probably still in code-behind file.
+
+    private void processRadioButtons(Dictionary<int, Dictionary<string, RadioButton>> dictionary, RadioButton target)
+    {
+        int row = getRowNumber(dictionary, target);
+        //uncheck sibling checkboxs in same row
+        foreach (RadioButton rb in dictionary[row].Values)
+            rb.Checked = (rb.ClientID == target.ClientID);
+        //uncheck sibling checkboxs in same column
+        foreach (KeyValuePair<int, Dictionary<string, RadioButton>> pair in dictionary)
+            foreach (RadioButton rb in pair.Value.Values)
+                if (rb.ClientID != target.ClientID)
+                    if (rb.Attributes["value"] == target.Attributes["value"])
+                        rb.Checked = false;
+    }
+
+    private int getRowNumber(Dictionary<int, Dictionary<string, RadioButton>> dictionary, RadioButton rb)
+    {
+        foreach (KeyValuePair<int, Dictionary<string, RadioButton>> pair in dictionary)
+        {
+            foreach (RadioButton value in pair.Value.Values)
+                if (rb.ClientID == value.ClientID)
+                    return pair.Key;
+        }
+        return -1;
+    }
+
+    private Control FindControlRecursiveByClientID(Control rootControl, string controlClientID)
+    {
+        if (rootControl.ClientID == controlClientID) return rootControl;
+
+        foreach (Control controlToSearch in rootControl.Controls)
+        {
+            Control controlToReturn =
+                FindControlRecursiveByClientID(controlToSearch, controlClientID);
+            if (controlToReturn != null) return controlToReturn;
+        }
+        return null;
+    }
+
+

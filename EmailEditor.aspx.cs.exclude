@@ -1,0 +1,226 @@
+﻿using AppSecurity;
+using ConferenceLibrary;
+using DataUtilities;
+using DataUtilities.SQLServer;
+using DataUtilities.KTActiveDirectory;
+using HelperFunctions;
+
+using OboutInc;
+using Obout.Interface.Interfaces;
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Configuration;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.HtmlControls;
+
+
+public partial class EmailEditor : OboutInc.oboutAJAXPage
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (!IsCallback && !IsPostBack)
+        {
+            loadAddressBook();
+        }
+    }
+
+    protected void bn_AddressLookup_Click(object sender, EventArgs e)
+    {
+        hdn_ActiveEmailList.Value = ((Button)sender).ID;
+        mpe_AddressBook.Show();
+    }
+
+
+    protected void bn_AddressBookOK_Click(object sender, EventArgs e)
+    {
+        TextBox active = null;
+        switch (hdn_ActiveEmailList.Value)
+        {
+            case "bn_ToLookup":
+                {
+                    active = tb_To;
+                    break;
+                }
+            case "bn_CcLookup":
+                {
+                    active = tb_CC;
+                    break;
+                }
+            case "bn_BccLookup":
+                {
+                    active = tb_Bcc;
+                    break;
+                }
+        }
+        if (active != null)
+        {
+            foreach (Obout.ListBox.ListBoxItem item in lb_Selected.Items)
+            {
+                active.Text += String.Format("{0};", item.Value);
+            }
+        }
+    }
+    
+    protected void bn_AddressBookCancel_Click(object sender, EventArgs e)
+    {
+        lb_Selected.Items.Clear();
+    }
+
+    protected void tv_EmailList_SelectedNodeChanged(object sender, EventArgs e)
+    {
+            ListItem found = null;;
+            foreach (ListItem item in lb_Selected.Items)
+            {
+                if (item.Value == tv_EmailList.SelectedNode.Value)
+                {
+                    found = item;
+                    break;
+                }
+            }
+
+            //if (found == null && tv_EmailList.SelectedNode.Checked)
+            //{
+            //    lb_Selected.Items.Add(new ListItem() { Text = tv_EmailList.SelectedNode.Text, Value = tv_EmailList.SelectedNode.Value });
+            //}
+            //else if (found != null && !tv_EmailList.SelectedNode.Checked)
+            //{
+            //    lb_Selected.Items.Remove(found);
+            //}
+                   
+    }
+
+
+    protected void tv_EmailList_TreeNodePopulate(object sender, TreeNodeEventArgs e)
+    {
+        switch (e.Node.Target)
+        {
+            case "alpha":
+                {
+                    populateAlphaNodes(e.Node);
+                    break;
+                }
+            default:
+                {
+                    break;
+                }
+
+        }
+    }
+
+    private void populateAlphaNodes(TreeNode parent)
+    {
+        string alpha = parent.Text;
+
+        DataTable emails = WebDataUtility.Instance.webAppTable("sp_GetAddressBookNames", new GenericCmdParameter[] { 
+                new GenericCmdParameter("@conferenceID", Conference.Instance.ID),
+                new GenericCmdParameter("@firstChar", alpha)
+                });
+
+        foreach (DataRow row in emails.Rows)
+        {
+            string name = DBNullable.ToString(row[0]);
+            parent.ChildNodes.Add(new TreeNode() { Text = name, 
+                ImageUrl = "Images/obout/treeview/person.gif", ShowCheckBox=true, Value = DBNullable.ToString(row[1]) });
+        }
+    }
+
+    private void loadAddressBook()
+    {
+
+        Obout.Ajax.UI.TreeView.Node rootNode = new Obout.Ajax.UI.TreeView.Node()
+        {
+            Text = "Address Book",
+            Expanded = true,
+            ImageUrl = "Styles/obout/treeview/folder.gif", 
+             };
+
+        DataTable dlists = WebDataUtility.Instance.webAppTable("sp_GetAddressBookDlists", 
+            new GenericCmdParameter[] { new GenericCmdParameter("@conferenceID", DBNull.Value) });
+
+        Obout.Ajax.UI.TreeView.Node currentNode = null;
+        if (dlists.Rows.Count > 0)
+        {
+            rootNode.ChildNodes.Add(new Obout.Ajax.UI.TreeView.Node()
+            {
+                Text = "Distribution Lists",
+                Expanded = true, 
+                ImageUrl = "Styles/obout/treeview/Folder_o.gif" });
+            string category = Guid.NewGuid().ToString();
+
+            currentNode = rootNode.ChildNodes[rootNode.ChildNodes.Count - 1];
+
+            foreach (DataRow row in dlists.Rows)
+            {
+                //check if we need a new category node for conference.
+                if (!DBNullable.ToString(row[0]).Equals(category))
+                {
+                    category = (DBNullable.ToString(row[0]).Equals(String.Empty) ? "Unassigned" : DBNullable.ToString(row[0]));
+                    if (currentNode.Parent != rootNode)
+                    {
+                        currentNode = rootNode.ChildNodes[0];
+                    }
+
+                    currentNode.ChildNodes.Add(new Obout.Ajax.UI.TreeView.Node()
+                    {
+                        Text = String.Format("<input type='checkbox' onclick='checkboxClick(this)'>{0}", category),
+                        Expanded = false,
+                        ImageUrl = "Styles/obout/treeview/Folder_o.gif", Target="dlist"});
+
+                    currentNode = currentNode.ChildNodes[currentNode.ChildNodes.Count - 1];
+                }
+
+                currentNode.ChildNodes.Add(new Obout.Ajax.UI.TreeView.Node()
+                {
+                    Text = DBNullable.ToString(row[1]),
+                    Value = DBNullable.ToString(row[1]), 
+                    ImageUrl = "Styles/obout/treeview/atS.gif" });
+            }
+
+            rootNode.ChildNodes.Add(new Obout.Ajax.UI.TreeView.Node() { Text = "Users", Expanded = true, ImageUrl = "Styles/obout/treeview/Folder_o.gif" });
+            currentNode = rootNode.ChildNodes[1];
+            category = Guid.NewGuid().ToString();
+            Dictionary<string, TreeNode> children = new Dictionary<string, TreeNode>();
+
+            for (int i = 0; i < Common.alphabet.Length; i++)
+            {
+                currentNode.ChildNodes.Add(new Obout.Ajax.UI.TreeView.Node()
+                {
+                    Text = Common.alphabet[i].ToUpper(),
+                    Value = Common.alphabet[i].ToUpper(),
+                    Expanded = false, NavigateUrl="#",
+                    ImageUrl = "Styles/obout/treeview/Folder.gif", Target="alpha" });
+            }
+           
+        }
+        tv_EmailList.Nodes.Add(rootNode);
+    }
+
+
+    private void treenode_Alphabet_DoubleClick()
+    {
+    }
+
+    private void openAddressBook()
+    {
+
+    }
+
+    protected void bn_Submit_Click(object sender, EventArgs e)
+    {
+
+
+
+
+
+    }
+}

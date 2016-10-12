@@ -1,0 +1,148 @@
+﻿<%@ Register TagPrefix="oajax" Namespace="OboutInc" Assembly="obout_AJAXPage"%>
+<%@ Page Language="C#" AutoEventWireup="true" CodeFile="EmailEditor.aspx.cs" Inherits="EmailEditor" %>
+
+<%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
+<%@ Register Assembly="Obout.Ajax.UI" Namespace="Obout.Ajax.UI.TreeView" TagPrefix="obout" %>
+<%@ Register Assembly="obout_ListBox" Namespace="Obout.ListBox" TagPrefix="cc1" %>
+<%@ Register Assembly="obout_Splitter2_Net" Namespace="OboutInc.Splitter2" TagPrefix="obspl" %>
+<%@ Register Assembly="obout_Window_NET" Namespace="OboutInc.Window" TagPrefix="owd" %>
+<%@ Register Assembly="Obout.Ajax.UI" Namespace="Obout.Ajax.UI.HTMLEditor" TagPrefix="obout" %>
+<%@ Register Assembly="Obout.Ajax.UI" Namespace="Obout.Ajax.UI.HTMLEditor.ToolbarButton"
+    TagPrefix="obout" %>
+<%@ Register Assembly="Obout.Ajax.UI" TagPrefix="obout" Namespace="Obout.Ajax.UI.HTMLEditor.Popups" %>
+<%@ Register Assembly="System.Web, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+    Namespace="System.Web.UI" TagPrefix="cc2" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title></title>
+</head>
+<body style="font-family: Tahoma; font-size: 10pt;">
+    <form id="form1" runat="server">
+    <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server">
+    </asp:ToolkitScriptManager>
+    <table>
+        <tr>
+            <td>
+                <table style="width: 100%">
+                    <tr>
+                        <td style="width: 45px">
+                            <asp:Button ID="bn_ToLookup" runat="server" Text="To..." OnClick="bn_AddressLookup_Click"
+                                Style="width: 40px" />
+                        </td>
+                        <td style="width: 900px">
+                            <asp:TextBox ID="tb_To" runat="server" Style="width: 100%" />
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table style="width: 100%">
+                    <tr>
+                        <td style="width: 45px">
+                            <asp:Button ID="bn_CCLookup" runat="server" Text="Cc..." Style="width: 40px" OnClick="bn_AddressLookup_Click" />
+                        </td>
+                        <td style="width: 900px">
+                            <asp:TextBox ID="tb_CC" runat="server" Style="width: 100%" />
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table style="width: 100%">
+                    <tr>
+                        <td style="width: 45px">
+                            <asp:Button ID="bn_BccLookup" runat="server" Text="Bcc..." Style="width: 40px" OnClick="bn_AddressLookup_Click" />
+                        </td>
+                        <td style="width: 900px">
+                            <asp:TextBox ID="tb_Bcc" runat="server" Style="width: 100%" />
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <asp:HiddenField ID="hdn_ActiveEmailList" runat="server" Value="to" />
+    <obout:EditorPopupHolder runat="server" ID="popupHolder">
+        <Preload>
+            <obout:ImageBrowser runat="server" GalleryFolders="~/Images" ManagedFolders="~/Images">
+            </obout:ImageBrowser>
+        </Preload>
+    </obout:EditorPopupHolder>
+    <asp:UpdatePanel ID="updatePanel1" runat="server">
+        <ContentTemplate>
+            <obout:Editor ID="Editor1" runat="server" PopupHolderID="popupHolder" Height="300px"
+                Width="100%">
+                <TopToolbar>
+                    <EditPredefinedButtons>
+                        <obout:FontName runat="server">
+                            <Options>
+                                <obout:SelectOption Text="Arial" Value="arial,helvetica,sans-serif" />
+                                <obout:SelectOption Text="Century Gothic" Value="century gothic, arial, sans-serif" />
+                                <obout:SelectOption Text="Courier New" Value="courier new,courier,monospace" />
+                                <obout:SelectOption Text="Georgia" Value="georgia,times new roman,times,serif" />
+                                <obout:SelectOption Text="Tahoma" Value="tahoma,arial,helvetica,sans-serif" />
+                                <obout:SelectOption Text="Times New Roman" Value="times new roman,times,serif" />
+                                <obout:SelectOption Text="Verdana" Value="verdana,arial,helvetica,sans-serif" />
+                                <obout:SelectOption Text="Impact" Value="impact" />
+                                <obout:SelectOption Text="WingDings" Value="wingdings" />
+                            </Options>
+                        </obout:FontName>
+                    </EditPredefinedButtons>
+                </TopToolbar>
+            </obout:Editor>
+            <br />
+            <asp:Button ID="bn_Submit" Text="Submit" runat="server" OnClick="bn_Submit_Click" />
+        </ContentTemplate>
+    </asp:UpdatePanel>
+    <div>
+        <asp:Button ID="bn_Dummy" runat="server" Text="Button" style="display:none" />
+    </div>
+    <asp:UpdatePanel ID="up_AddressBook" runat="server">
+        <ContentTemplate>
+            <asp:Panel ID="pnl_AddressBook" runat="server" Width="750px" BackColor="White" BorderColor="Navy"
+                BorderStyle="Solid" BorderWidth="1" Style="display: none; padding: 10px 10px 10px 10px">
+                <asp:UpdatePanel ID="pnl_AddressBookInner" runat="server">
+                <ContentTemplate>
+                <div id="divSplitter" style="width: 750px; height: 600px;">
+                    <div style="width: 450px; float: left">
+                        <div style="width: 100%; padding-left: 10px; padding-top: 10px">
+                            <asp:TextBox ID="tb_EmailSearch" runat="server" Width="150" CssClass="floaterL" />
+                            <asp:Button ID="bn_EmailSearchSubmit" runat="server" Width="40" CssClass="floaterL"
+                                Text="Find" />
+                        </div>
+                        <div style="width: 100%; padding-left: 10px; padding-top: 10px">
+                            <obout:Tree ID="tv_EmailList" runat="server" Width="200px" OnTreeNodeExpanded="tv_EmailList_TreeNodePopulate" OnSelectedTreeNodeChanged="tv_EmailList_SelectedNodeChanged" AllowNodeEdit="false">
+                            </obout:Tree>
+
+<%--
+                            <asp:TreeView ID="tv_EmailList" runat="server" OnTreeNodePopulate="tv_EmailList_TreeNodePopulate"
+                                OnSelectedNodeChanged="tv_EmailList_SelectedNodeChanged" OnTreeNodeCheckChanged="tv_EmailList_SelectedNodeChanged" Style="width: 100%">
+                            </asp:TreeView>
+--%>                        </div>
+                    </div>
+                    <div style="width: 300px; float: left">
+                        <div style="width: 100%">
+                            <asp:ListBox ID="lb_Selected" runat="server" Style="width: 100%"></asp:ListBox>
+                        </div>
+                        <div style="width: 100%">
+                            <asp:Button ID="bn_AddressBookOK" runat="server" Text="Add" OnClick="bn_AddressBookOK_Click" />
+                            <asp:Button ID="bn_AddressBookCancel" runat="server" Text="Cancel" OnClick="bn_AddressBookCancel_Click" />
+                        </div>
+                    </div>
+                </div>
+                </ContentTemplate>
+                </asp:UpdatePanel>
+            </asp:Panel>
+        </ContentTemplate>
+    </asp:UpdatePanel>
+    <asp:ModalPopupExtender ID="mpe_AddressBook" PopupControlID="pnl_AddressBook" TargetControlID="bn_Dummy" OkControlID="bn_AddressBookOK" CancelControlID="bn_AddressBookCancel"
+        runat="server">
+    </asp:ModalPopupExtender>
+    </form>
+</body>
+</html>

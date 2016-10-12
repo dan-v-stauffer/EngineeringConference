@@ -1,0 +1,20 @@
+TO DO:
+
+1. **DONE**Wire up error message if > registration closed date
+2. **DONE**Update tbl_Invitees to have an int column to represent primary vs alternate
+3.**DONE** Move Invitee stuff to Default.
+4.**DONE** Modal panel to capture non-invitees (**DONE**)
+4.**DONE**5 Modal panel to capture too-late registration.
+5. **DONE**Create good confirmation page to show all the stuff that is in the eamail
+6. **DONE**Format eamail to be a bit nicer - use same html that shows in confirmation page.
+7. NEED FAQs to be in email and in confirmation page
+- FAQs linked to Conference site as Custom List?
+8. Design Doc for Jagan
+9.  **DONE**Confirmation Page
+10. **DONE** Cancel button on form - return to landing page
+11. Logging - both successful and failed registrations.
+12. Logging - errors
+13. Scheduling Page - Integrate drag and drop calendar scheduler control
+14. **DONE**Update tbl_User for admin user. Update Session["user"] when user inputs "admin" fields.
+//change rsvp.Email (string) to rsvp.Admin (KTConferenceUser...)
+//though do not change name fields if user has existing RSVP...

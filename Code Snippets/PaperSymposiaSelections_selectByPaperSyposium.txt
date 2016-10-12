@@ -1,0 +1,71 @@
+                    <asp:UpdatePanel ID="up_SymposiumChoice" runat="server">
+                        <ContentTemplate>
+                            <asp:DataList ID="dl_PaperSymposiaList" OnItemDataBound="dl_PaperSymposiaList_ItemDataBound"
+                                RepeatDirection="Horizontal" runat="server">
+                                <HeaderTemplate>
+                                    <i>Select your top two choices from each scheduled symposium:</i>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <div style="border: 1px solid silver; width: 250px; margin-bottom: 10px; padding: 5px;
+                                        height: 180px">
+                                        <div style="width: 100%; float: left; margin-top: 5px; margin-bottom: 10px;">
+                                            <b>
+                                                <asp:Label ID="lbl_SymposiaGroupTitle" runat="server" />
+                                            </b>
+                                        </div>
+                                        <div style="width: 250px">
+                                            <table>
+                                                <tr>
+                                                    <td style="width: 200px;">
+                                                    </td>
+                                                    <td style="width: 50px;">
+                                                        <table>
+                                                            <tr>
+                                                                <td style="width: 25px; text-align: center;">
+                                                                    <div style="width: 25px">
+                                                                        1<sup>st</sup>
+                                                                    </div>
+                                                                </td>
+                                                                <td style="width: 25px; text-align: center;">
+                                                                    <div style="width: 25px">
+                                                                        2<sup>nd</sup>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <asp:DataList ID="dl_PaperSymposiaChoices" runat="server" OnItemDataBound="dl_PaperSymposiaChoices_ItemDataBound">
+                                            <ItemTemplate>
+                                                <div style="width: 250px; float: left">
+                                                    <table>
+                                                        <tr>
+                                                            <td style="width: 180px">
+                                                                <div class="itemWithDetail">
+                                                                    <asp:Label ID="lbl_SymposiumName" runat="server" />
+                                                                </div>
+                                                            </td>
+                                                            <td style="width: 25px; text-align: center;">
+                                                                <div style="width: 25px; text-align: center">
+                                                                    <asp:RadioButton ID="rbSymposium1st" OnCheckedChanged="rbSymposium_CheckedChanged"
+                                                                        AutoPostBack="true" runat="server" />
+                                                                </div>
+                                                            </td>
+                                                            <td style="width: 25px; text-align: center;">
+                                                                <div style="width: 25px; text-align: center">
+                                                                    <asp:RadioButton ID="rbSymposium2nd" OnCheckedChanged="rbSymposium_CheckedChanged"
+                                                                        AutoPostBack="true" runat="server" />
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </ItemTemplate>
+                                        </asp:DataList>
+                                    </div>
+                                </ItemTemplate>
+                            </asp:DataList>
+                        </ContentTemplate>
+                    </asp:UpdatePanel>
